@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigiSign Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">🏠 Home</a></li>
+            <li><a href="{{ url_for('about') }}">📖 About</a></li>
+        </ul>
+    </nav>
+    
+
+    <h1>🔍 How DigiSign Works</h1>
+
+    <h2>🔑 Step 1: Generate Keys</h2>
+    <p>Click "Generate Keys" to create a private and public key pair for signing and verifying documents.</p>
+
+    <h2>✍️ Step 2: Sign a Document</h2>
+    <p>Upload a document and click "Sign Document". The website will generate a digital signature file.</p>
+
+    <h2>✅ Step 3: Verify Signature</h2>
+    <p>Upload the original document and the signature file, then click "Verify Signature" to check if the document is authentic.</p>
+</body>
+</html>

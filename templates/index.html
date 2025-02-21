@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigiSign Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">🏠 Home</a></li>
+            <li><a href="{{ url_for('about') }}">📖 About</a></li>
+        </ul>
+    </nav>
+    
+    <h1>🔏 Digital Signature Tool</h1>
+
+    <button onclick="generateKeys()">Generate Keys 🔑</button>
+
+    <section>
+        <h2>✍️ Sign a Document</h2>
+        <form id="sign-form" enctype="multipart/form-data">
+            <label for="sign-file">Select File to Sign:</label>
+            <input type="file" id="sign-file" required>
+            <button type="button" onclick="signDocument()">Sign Document</button>
+        </form>
+        <a id="download-link" style="display:none;">Download Signature</a>
+    </section>
+
+    <section>
+        <h2>✅ Verify Signature</h2>
+        <form id="verify-form" enctype="multipart/form-data">
+            <label for="verify-file">Select Original File:</label>
+            <input type="file" id="verify-file" required>
+            
+            <label for="signature-file">Select Signature File (.sig):</label>
+            <input type="file" id="signature-file" required>
+            
+            <button type="button" onclick="verifySignature()">Verify Signature</button>
+        </form>
+        <p id="verify-result"></p>
+    </section>
+
+    <script>
+        function generateKeys() {
+            fetch('/generate_keys', { method: 'POST' })
+                .then(response => response.text())
+                .then(alert);
+        }
+
+        function signDocument() {
+            let fileInput = document.getElementById("sign-file");
+            let downloadLink = document.getElementById("download-link");
+
+            if (!fileInput.files.length) {
+                alert("❌ Please select a file to sign.");
+                return;
+            }
+        
+            let formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+        
+            // Reset previous download link
+            downloadLink.style.display = "none";
+            downloadLink.href = "#";
+            downloadLink.textContent = "";
+        
+            fetch('/sign', { method: 'POST', body: formData })
+                .then(response => response.blob())
+                .then(blob => {
+                    let url = window.URL.createObjectURL(blob);
+                
+                    // Update the download link with new signature
+                    downloadLink.href = url;
+                    downloadLink.download = "signature.sig";
+                    downloadLink.style.display = "block";
+                    downloadLink.textContent = "⬇️ Download Signature";
+                })
+                .catch(error => {
+                    console.error("Error signing document:", error);
+                    alert("❌ Error signing document. Please try again.");
+                });
+        }
+
+
+        function verifySignature() {
+            let fileInput = document.getElementById("verify-file");
+            let sigInput = document.getElementById("signature-file");
+            let resultText = document.getElementById("verify-result");
+
+            if (!fileInput.files.length || !sigInput.files.length) {
+                resultText.textContent = "❌ Please select both files.";
+                resultText.style.color = "red";
+                return;
+            }
+        
+            let formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            formData.append("signature", sigInput.files[0]);
+        
+            resultText.textContent = "🔄 Verifying...";
+            resultText.style.color = "black"; // Reset color while verifying
+        
+            fetch('/verify', { method: 'POST', body: formData })
+                .then(response => response.text())
+                .then(result => {
+                    resultText.textContent = result;
+                
+                    // Correct color logic
+                    if (result.toLowerCase().includes("valid")) {
+                        resultText.style.color = "green"; // ✅ Show valid signature in green
+                    } else {
+                        resultText.style.color = "red"; // ❌ Show invalid signature in red
+                    }
+                })
+                .catch(error => {
+                    resultText.textContent = "❌ Error verifying signature.";
+                    resultText.style.color = "red";
+                    console.error(error);
+                });
+        }
+
+
+    </script>
+</body>
+</html>
