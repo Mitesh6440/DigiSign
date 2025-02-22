@@ -17,15 +17,19 @@
     <h1>🔏 Digital Signature Tool</h1>
 
     <button onclick="generateKeys()">Generate Keys 🔑</button>
-
+    <p id="key-message"></p>
+    
     <section>
         <h2>✍️ Sign a Document</h2>
         <form id="sign-form" enctype="multipart/form-data">
+            <label for="key-index">Select Key:</label>
+            <select id="key-index"></select>
+            
             <label for="sign-file">Select File to Sign:</label>
             <input type="file" id="sign-file" required>
             <button type="button" onclick="signDocument()">Sign Document</button>
         </form>
-        <a id="download-link" style="display:none;">Download Signature</a>
+        <a id="download-link" style="display:none;">⬇️ Download Signature</a>
     </section>
 
     <section>
@@ -37,22 +41,67 @@
             <label for="signature-file">Select Signature File (.sig):</label>
             <input type="file" id="signature-file" required>
             
+            <label for="verify-key-index">Select Key:</label>
+            <select id="verify-key-index"></select>
+            
             <button type="button" onclick="verifySignature()">Verify Signature</button>
         </form>
         <p id="verify-result"></p>
     </section>
 
     <script>
+        // Fetch keys when the page loads
+        window.onload = function () {
+            fetchKeys();
+        };
+        
+        function fetchKeys() {
+            fetch('/keys')
+                .then(response => response.json())
+                .then(keys => {
+                    let keyDropdown = document.getElementById("key-index");
+                    let verifyKeyDropdown = document.getElementById("verify-key-index");
+                
+                    keyDropdown.innerHTML = ""; // Clear previous options
+                    verifyKeyDropdown.innerHTML = ""; // Clear previous options
+                
+                    keys.forEach(key => {
+                        let option = document.createElement("option");
+                        option.value = key.key_id;
+                        option.textContent = key.label;
+                        keyDropdown.appendChild(option);
+                    
+                        let verifyOption = document.createElement("option");
+                        verifyOption.value = key.key_id;
+                        verifyOption.textContent = key.label;
+                        verifyKeyDropdown.appendChild(verifyOption);
+                    });
+                })
+                .catch(error => console.error("Error fetching keys:", error));
+        }
+        
+        // Modify generateKeys() function to update the dropdown immediately after key generation
         function generateKeys() {
             fetch('/generate_keys', { method: 'POST' })
-                .then(response => response.text())
-                .then(alert);
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    fetchKeys(); // Fetch all keys again to update the dropdown
+                })
+                .catch(error => console.error("Error generating keys:", error));
         }
+
 
         function signDocument() {
             let fileInput = document.getElementById("sign-file");
+            let keyIndex = document.getElementById("key-index").value;
             let downloadLink = document.getElementById("download-link");
 
+            if (!keyIndex) {
+                alert("❌ Please select a key.");
+                return;
+            }
+        
             if (!fileInput.files.length) {
                 alert("❌ Please select a file to sign.");
                 return;
@@ -60,26 +109,19 @@
         
             let formData = new FormData();
             formData.append("file", fileInput.files[0]);
-        
-            // Reset previous download link
-            downloadLink.style.display = "none";
-            downloadLink.href = "#";
-            downloadLink.textContent = "";
+            formData.append("key_id", keyIndex);
         
             fetch('/sign', { method: 'POST', body: formData })
-                .then(response => response.blob())
-                .then(blob => {
-                    let url = window.URL.createObjectURL(blob);
-                
-                    // Update the download link with new signature
+                .then(response => response.json())
+                .then(data => {
+                    let url = `/uploads/${data.signature_path.split('/').pop()}`;
                     downloadLink.href = url;
                     downloadLink.download = "signature.sig";
                     downloadLink.style.display = "block";
                     downloadLink.textContent = "⬇️ Download Signature";
                 })
                 .catch(error => {
-                    console.error("Error signing document:", error);
-                    alert("❌ Error signing document. Please try again.");
+                    alert("❌ Error signing document.");
                 });
         }
 
@@ -87,40 +129,28 @@
         function verifySignature() {
             let fileInput = document.getElementById("verify-file");
             let sigInput = document.getElementById("signature-file");
+            let keyIndex = document.getElementById("verify-key-index").value;
             let resultText = document.getElementById("verify-result");
 
-            if (!fileInput.files.length || !sigInput.files.length) {
-                resultText.textContent = "❌ Please select both files.";
-                resultText.style.color = "red";
+            if (!fileInput.files.length || !sigInput.files.length || !keyIndex) {
+                resultText.textContent = "❌ Please select all required fields.";
                 return;
             }
-        
+
             let formData = new FormData();
             formData.append("file", fileInput.files[0]);
             formData.append("signature", sigInput.files[0]);
-        
-            resultText.textContent = "🔄 Verifying...";
-            resultText.style.color = "black"; // Reset color while verifying
-        
+            formData.append("key_id", keyIndex);
+
             fetch('/verify', { method: 'POST', body: formData })
-                .then(response => response.text())
-                .then(result => {
-                    resultText.textContent = result;
-                
-                    // Correct color logic
-                    if (result.toLowerCase().includes("valid")) {
-                        resultText.style.color = "green"; // ✅ Show valid signature in green
-                    } else {
-                        resultText.style.color = "red"; // ❌ Show invalid signature in red
-                    }
+                .then(response => response.json())
+                .then(data => {
+                    resultText.textContent = data.message;
                 })
                 .catch(error => {
                     resultText.textContent = "❌ Error verifying signature.";
-                    resultText.style.color = "red";
-                    console.error(error);
                 });
         }
-
 
     </script>
 </body>

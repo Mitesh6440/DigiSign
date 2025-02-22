@@ -30,7 +30,7 @@ section {
     align-items: center;
     max-width: 500px;
     box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
+    /* backdrop-filter: blur(10px); */
     transition: all 0.3s ease-in-out;
 }
 
@@ -40,7 +40,7 @@ section:hover {
 }
 
 /* Input Fields */
-input[type="file"] {
+input[type="file"], select {
     background: rgba(255, 255, 255, 0.1);
     color: #e0e0e0;
     padding: 14px;
@@ -52,7 +52,7 @@ input[type="file"] {
     transition: all 0.3s ease;
 }
 
-input[type="file"]:hover {
+input[type="file"]:hover, select:hover {
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.3);
 }
@@ -112,6 +112,36 @@ label {
     margin-bottom: 8px;
     color: #b0bec5;
 }
+
+/* Dropdown Styling */
+select {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e0e0e0; /* Ensures text is visible */
+    padding: 14px;
+    border-radius: 8px;
+    width: 100%;
+    margin-bottom: 16px;
+    font-size: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    appearance: none; /* Removes default dropdown styling */
+    cursor: pointer;
+}
+
+/* Dropdown Hover */
+select:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Dropdown Options */
+select option {
+    background: #2a2a40; /* Dark background */
+    color: #ffffff; /* White text for better visibility */
+    font-size: 14px;
+    padding: 10px;
+}
+
 
 /* Navbar Styling */
 nav {
